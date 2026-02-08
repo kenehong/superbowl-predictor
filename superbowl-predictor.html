@@ -1021,8 +1021,25 @@
         }
 
         function closeModal() {
+            // Check if there's any input in the form
+            const name = document.getElementById('playerName').value.trim();
+            const seahawks = document.getElementById('seahawksPrediction').value;
+            const patriots = document.getElementById('patriotsPrediction').value;
+
+            const hasInput = name || seahawks || patriots;
+
+            // If there's input, confirm before closing
+            if (hasInput) {
+                if (!confirm('You have unsaved input. Are you sure you want to close?')) {
+                    return; // Don't close if user cancels
+                }
+            }
+
             isModalOpen = false;
             document.getElementById('predictionModal').classList.remove('active');
+
+            // Reset form when closing
+            document.querySelector('.prediction-form').reset();
         }
 
         function openInfoModal() {
