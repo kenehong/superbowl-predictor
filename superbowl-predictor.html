@@ -1069,9 +1069,14 @@
             const seahawksScore = parseInt(document.getElementById('seahawksPrediction').value);
             const patriotsScore = parseInt(document.getElementById('patriotsPrediction').value);
 
+            // Super Bowl cannot end in a tie
+            if (seahawksScore === patriotsScore) {
+                alert('Super Bowl cannot end in a tie! Please enter different scores.');
+                return;
+            }
+
             // Automatically determine winning team from scores
-            const winningTeam = seahawksScore > patriotsScore ? 'Seahawks' :
-                               patriotsScore > seahawksScore ? 'Patriots' : 'Tie';
+            const winningTeam = seahawksScore > patriotsScore ? 'Seahawks' : 'Patriots';
 
             const prediction = {
                 name: document.getElementById('playerName').value,
