@@ -164,13 +164,6 @@
             color: #9ca9b8;
         }
 
-        .game-status {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
         .form-section {
             margin-bottom: 30px;
         }
@@ -398,13 +391,17 @@
         }
 
         .manual-score {
-            display: grid;
+            display: none;
             grid-template-columns: 1fr 1fr auto;
             gap: 10px;
             align-items: end;
             margin-top: 15px;
             padding-top: 15px;
             border-top: 2px dashed #e0e0e0;
+        }
+
+        .manual-score.active {
+            display: grid;
         }
 
         .refresh-info {
@@ -495,31 +492,38 @@
         }
 
         .game-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
             margin-top: 15px;
             padding: 15px;
             background: #f8f9fa;
             border-radius: 8px;
+            flex-wrap: wrap;
         }
 
         .info-item {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .info-label {
-            font-size: 0.85em;
+            font-size: 0.9em;
             color: #666;
-            margin-bottom: 5px;
-            text-transform: uppercase;
             font-weight: 600;
         }
 
         .info-value {
-            font-size: 1.3em;
+            font-size: 1em;
             color: #333;
             font-weight: 700;
+        }
+
+        .info-separator {
+            color: #999;
+            font-weight: 300;
         }
 
         .api-status {
@@ -565,6 +569,22 @@
         .last-update {
             color: #666;
             font-size: 0.85em;
+        }
+
+        .manual-switch-btn {
+            background: none;
+            border: none;
+            color: #5a6c7d;
+            font-size: 0.85em;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 5px 8px;
+            margin-left: 10px;
+            transition: color 0.2s;
+        }
+
+        .manual-switch-btn:hover {
+            color: #1a2332;
         }
 
         .add-prediction-btn {
@@ -758,17 +778,18 @@
                             <div class="team-score" id="patriotsScore">-</div>
                         </div>
                     </div>
-                    <div class="game-status" id="gameStatus">Game not started</div>
 
                     <div class="game-info">
                         <div class="info-item">
                             <div class="info-label">Quarter</div>
                             <div class="info-value" id="quarterInfo">-</div>
                         </div>
+                        <span class="info-separator">•</span>
                         <div class="info-item">
                             <div class="info-label">Clock</div>
                             <div class="info-value" id="clockInfo">-</div>
                         </div>
+                        <span class="info-separator">•</span>
                         <div class="info-item">
                             <div class="info-label">Status</div>
                             <div class="info-value" id="detailedStatus">Scheduled</div>
@@ -779,6 +800,7 @@
                         <div class="status-indicator status-loading" id="statusIndicator"></div>
                         <span id="apiStatusText">Initializing...</span>
                         <span class="last-update" id="lastUpdate"></span>
+                        <button class="manual-switch-btn" id="manualSwitchBtn" onclick="toggleScoreMode()">Having trouble? Enter manual</button>
                     </div>
 
                     <div class="manual-score">
@@ -865,13 +887,13 @@
             </div>
 
             <h3>📋 Game Rules</h3>
-            <p>Predict the final score of Super Bowl LX and compete with your family!</p>
+            <p>Predict the final score of Super Bowl LX and compete with your friends and family!</p>
 
             <h3>🎯 How to Win</h3>
             <ul>
-                <li><strong>Lowest score error wins!</strong></li>
+                <li><strong>1st Priority:</strong> Predict the winning team correctly!</li>
+                <li><strong>2nd Priority:</strong> Lowest score error</li>
                 <li>Score error = Total difference from actual scores</li>
-                <li>Example: If actual is SEA 28 - NE 24, and you predicted SEA 30 - NE 22, your error is 4 points</li>
             </ul>
 
             <h3>📱 How It Works</h3>
@@ -898,6 +920,8 @@
         let lastUpdateTime = null;
         let previousWinner = null;
         let isModalOpen = false;
+        let scoreMode = 'auto';
+        let apiInterval = null;
         let gameInfo = {
             quarter: null,
             clock: null,
@@ -1051,11 +1075,66 @@
             closeModal();
         }
 
+        // Toggle score mode
+        function toggleScoreMode() {
+            if (scoreMode === 'auto') {
+                setScoreMode('manual');
+            } else {
+                setScoreMode('auto');
+            }
+        }
+
+        // Set score mode
+        function setScoreMode(mode) {
+            scoreMode = mode;
+            const manualScore = document.querySelector('.manual-score');
+            const gameInfo = document.querySelector('.game-info');
+            const lastUpdate = document.getElementById('lastUpdate');
+            const switchBtn = document.getElementById('manualSwitchBtn');
+
+            if (mode === 'manual') {
+                // Stop API calls
+                if (apiInterval) {
+                    clearInterval(apiInterval);
+                    apiInterval = null;
+                }
+                updateApiStatus('loading', 'Manual mode - API paused');
+
+                // Update button text
+                if (switchBtn) switchBtn.textContent = 'Switch back to Auto';
+
+                // Show manual score input, hide game info and last update
+                if (manualScore) manualScore.classList.add('active');
+                if (gameInfo) gameInfo.style.display = 'none';
+                if (lastUpdate) lastUpdate.style.display = 'none';
+            } else {
+                // Resume API calls
+                if (!apiInterval) {
+                    fetchLiveScore(); // Fetch immediately
+                    apiInterval = setInterval(fetchLiveScore, 60000);
+                }
+
+                // Update button text
+                if (switchBtn) switchBtn.textContent = 'Having trouble? Enter manual';
+
+                // Hide manual score input, show game info and last update
+                if (manualScore) manualScore.classList.remove('active');
+                if (gameInfo) gameInfo.style.display = 'flex';
+                if (lastUpdate) lastUpdate.style.display = 'inline';
+            }
+        }
+
         // Fetch live score from ESPN API
         async function fetchLiveScore() {
             // Skip if modal is open (user is entering prediction)
             if (isModalOpen) {
                 console.log('Modal is open, skipping API call');
+                return;
+            }
+
+            // Skip if manual mode
+            if (scoreMode === 'manual') {
+                console.log('Manual mode, skipping API call');
                 return;
             }
 
@@ -1088,7 +1167,6 @@
                     gameInfo.status = game.status.type;
 
                     updateScoreDisplay();
-                    updateGameStatus(game.status);
                     updateGameInfo();
 
                     // Update last update time
@@ -1136,19 +1214,6 @@
             renderPredictions();
         }
 
-        // Update game status
-        function updateGameStatus(status) {
-            let statusText = '';
-            if (status.type.completed) {
-                statusText = 'Game Ended';
-            } else if (status.type.state === 'in') {
-                statusText = `In Progress - ${status.type.detail}`;
-            } else {
-                statusText = 'Game not started';
-            }
-            document.getElementById('gameStatus').textContent = statusText;
-        }
-
         // Update game info
         function updateGameInfo() {
             // Quarter
@@ -1170,13 +1235,28 @@
 
             // Detailed status
             const statusEl = document.getElementById('detailedStatus');
+            const statusItem = statusEl.closest('.info-item');
+            const statusSeparator = statusItem ? statusItem.previousElementSibling : null;
+
             if (gameInfo.status) {
                 if (gameInfo.status.completed) {
                     statusEl.textContent = 'Final';
+                    if (statusItem) statusItem.style.display = 'flex';
+                    if (statusSeparator && statusSeparator.classList.contains('info-separator')) {
+                        statusSeparator.style.display = 'inline';
+                    }
                 } else if (gameInfo.status.state === 'in') {
-                    statusEl.textContent = 'Live';
+                    // Hide status when Live (Quarter and Clock already show game is in progress)
+                    if (statusItem) statusItem.style.display = 'none';
+                    if (statusSeparator && statusSeparator.classList.contains('info-separator')) {
+                        statusSeparator.style.display = 'none';
+                    }
                 } else {
                     statusEl.textContent = 'Scheduled';
+                    if (statusItem) statusItem.style.display = 'flex';
+                    if (statusSeparator && statusSeparator.classList.contains('info-separator')) {
+                        statusSeparator.style.display = 'inline';
+                    }
                 }
             }
         }
@@ -1239,7 +1319,6 @@
                 currentScore.seahawks = parseInt(seahawks);
                 currentScore.patriots = parseInt(patriots);
                 updateScoreDisplay();
-                document.getElementById('gameStatus').textContent = 'Manually Updated';
             }
         }
 
@@ -1249,19 +1328,14 @@
                 return null;
             }
 
-            const actualDiff = Math.abs(currentScore.seahawks - currentScore.patriots);
             const actualWinner = currentScore.seahawks > currentScore.patriots ? 'Seahawks' :
                                 currentScore.patriots > currentScore.seahawks ? 'Patriots' : 'Tie';
 
-            const predictedDiff = Math.abs(prediction.seahawksScore - prediction.patriotsScore);
             const predictedWinner = prediction.seahawksScore > prediction.patriotsScore ? 'Seahawks' :
                                    prediction.patriotsScore > prediction.seahawksScore ? 'Patriots' : 'Tie';
 
             // Check if winner is correct
-            const correctWinner = actualWinner === predictedWinner || actualWinner === 'Tie';
-
-            // Calculate score difference accuracy
-            const diffAccuracy = Math.abs(actualDiff - predictedDiff);
+            const correctWinner = actualWinner === predictedWinner;
 
             // Calculate how close to exact score
             const seahawksError = Math.abs(currentScore.seahawks - prediction.seahawksScore);
@@ -1270,9 +1344,8 @@
 
             return {
                 correctWinner,
-                diffAccuracy,
                 totalScoreError,
-                score: correctWinner ? (1000 - diffAccuracy * 10 - totalScoreError) : (0 - totalScoreError * 2)
+                score: correctWinner ? (1000 - totalScoreError) : (0 - totalScoreError * 2)
             };
         }
 
@@ -1326,20 +1399,35 @@
 
             container.innerHTML = predictionsWithScores.map((p, index) => {
                 const isWinner = hasScore && winner && p.name === winner.name;
-                const diff = p.seahawksScore > p.patriotsScore ?
-                    `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
-                    p.patriotsScore > p.seahawksScore ?
-                    `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
-                    'Tie predicted';
 
-                let scoreInfo = '';
+                let detailsInfo = '';
                 if (hasScore && p.result) {
-                    const actualWinner = currentScore.seahawks > currentScore.patriots ? 'Seahawks' :
-                                        currentScore.patriots > currentScore.seahawks ? 'Patriots' : 'Tie';
+                    const diff = p.seahawksScore > p.patriotsScore ?
+                        `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
+                        p.patriotsScore > p.seahawksScore ?
+                        `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
+                        'Tie predicted';
 
-                    scoreInfo = `
-                        <div class="score-diff">
-                            ${actualWinner} | Score error: ${p.result.totalScoreError} pts
+                    // Check if actual game is a Tie
+                    const actualIsTie = currentScore.seahawks === currentScore.patriots;
+                    // Don't show checkmark if actual game is a Tie
+                    const correctIndicator = actualIsTie ? '' : (p.result.correctWinner ? '✅' : '❌');
+                    const separator = correctIndicator ? ' ' : '';
+                    detailsInfo = `
+                        <div class="prediction-details">
+                            ${correctIndicator}${separator}${diff} | Score error: ${p.result.totalScoreError} pts
+                        </div>
+                    `;
+                } else {
+                    const diff = p.seahawksScore > p.patriotsScore ?
+                        `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
+                        p.patriotsScore > p.seahawksScore ?
+                        `${p.winningTeam} wins by ${Math.abs(p.seahawksScore - p.patriotsScore)} pts` :
+                        'Tie predicted';
+
+                    detailsInfo = `
+                        <div class="prediction-details">
+                            ${diff}
                         </div>
                     `;
                 }
@@ -1354,10 +1442,7 @@
                             <div class="prediction-details">
                                 Prediction: Seahawks ${p.seahawksScore} - ${p.patriotsScore} Patriots
                             </div>
-                            <div class="prediction-details">
-                                ${diff}
-                            </div>
-                            ${scoreInfo}
+                            ${detailsInfo}
                         </div>
                         <button class="menu-btn" onclick="toggleMenu(${index}); event.stopPropagation();">⋮</button>
                         <div id="menu-${index}" class="dropdown-menu">
@@ -1372,8 +1457,8 @@
         loadPredictions();
         fetchLiveScore();
 
-        // Update live score every 60 seconds
-        setInterval(fetchLiveScore, 60000);
+        // Update live score every 60 seconds (only in auto mode)
+        apiInterval = setInterval(fetchLiveScore, 60000);
     </script>
 </body>
 </html>
