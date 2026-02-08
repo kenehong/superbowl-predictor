@@ -6,6 +6,10 @@ A fun, family-friendly web application for predicting Super Bowl scores and comp
 
 This interactive game lets you and your friends and family predict the final score of Super Bowl LX (Seattle Seahawks vs New England Patriots) and compete to see who gets closest to the actual result.
 
+## 📸 Screenshot
+
+![Main View](screenshots/main-view.png)
+
 ## ✨ Features
 
 ### Core Functionality
