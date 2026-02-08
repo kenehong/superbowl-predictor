@@ -1412,7 +1412,8 @@
             }
 
             const hasScore = currentScore.seahawks !== null && currentScore.patriots !== null;
-            const winner = hasScore && predictionsWithScores.length > 0 ? predictionsWithScores[0] : null;
+            const isScoreTied = hasScore && currentScore.seahawks === 0 && currentScore.patriots === 0;
+            const winner = hasScore && !isScoreTied && predictionsWithScores.length > 0 ? predictionsWithScores[0] : null;
 
             // Check if winner changed and trigger confetti
             if (winner) {
