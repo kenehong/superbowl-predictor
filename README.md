@@ -8,7 +8,7 @@ This interactive game lets you and your friends and family predict the final sco
 
 ## 📸 Screenshot
 
-![Main View](screenshots/main-view.png)
+![Main View](claude/superbowl/screenshots/main-view.png)
 
 ## ✨ Features
 
