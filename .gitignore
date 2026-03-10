@@ -35,3 +35,41 @@ Temporary Items
 # Backup files
 *.bak
 *~
+
+# Personal/Private folders
+claude/
+Documents/
+Desktop/
+Downloads/
+Pictures/
+Movies/
+Music/
+FamilyWorship/
+Kids/
+WorkIQ-webapp/
+work-log-agent/
+Library/
+Applications/
+
+# Personal config and data
+.ssh/
+.workiq.json
+.claude/
+.claude-cli/
+.claude.json*
+.azure/
+.azureauth/
+.bash_history
+.zsh_history
+.viminfo
+.npm/
+.cache/
+
+# Project-specific
+dotfiles/
+fsd103/
+fsd103_backup/
+game101/
+wireframe-to-html/
+NarratorGenerator/
+NotebookLM\ MCP/

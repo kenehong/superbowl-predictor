@@ -1,0 +1,24 @@
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+*~
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Session artifacts
+*.db-shm
+*.db-wal
+
+# Backups from setup.ps1
+*.backup.*
+
+# Personal/Private
+skills/custom/kids/
+LEARNINGS.md
